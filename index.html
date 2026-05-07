@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0054)file:///C:/Users/Felix/Downloads/index-cloudflare.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Occidental Lofts / Groupe Centra — Rentals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com/">
-<link href="./Occidental Lofts _ Groupe Centra — Rentals_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;1,300&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -26,6 +25,10 @@
     background: var(--surface); padding: 0 20px; height: 54px; flex-shrink: 0;
   }
   .nav-brand { font-family: var(--font-display); font-size: 18px; font-weight: 300; font-style: italic; }
+  .nav-status { margin-left: auto; font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; }
+  .status-dot.ok { background: #2d5a3d; }
+  .status-dot.err { background: #c0392b; }
 
   #app { display: flex; flex-direction: column; height: 100%; }
   #chat-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; max-width: 720px; margin: 0 auto; width: 100%; }
@@ -53,6 +56,7 @@
     line-height: 1.5; max-height: 130px; overflow-y: auto; transition: border-color .15s;
   }
   #msg-input:focus { border-color: var(--accent); }
+  #msg-input:disabled { opacity: 0.5; }
   #send-btn {
     width: 46px; height: 46px; border-radius: 50%; border: none;
     background: var(--accent); color: white; font-size: 20px;
@@ -68,31 +72,51 @@
 <div id="app">
   <nav>
     <span class="nav-brand">Occidental / Groupe Centra</span>
+    <span class="nav-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Loading listings…</span>
+    </span>
   </nav>
   <div id="chat-panel">
-    <div id="messages"><div class="msg-group bot"><div class="msg-label">Assistant</div><div class="bubble">👋 Hi! I'm the rental assistant for Occidental Lofts &amp; Groupe Centra.<br><br>We have apartments available across Montréal — Plateau, Downtown, NDG, Repentigny and more. Ask me anything about pricing, size, pets, availability — in English or French.<br><br>Bonjour ! Posez-moi vos questions sur nos appartements en anglais ou en français !</div></div></div>
+    <div id="messages"></div>
     <div id="input-bar">
-      <textarea id="msg-input" placeholder="Type a message… / Écrivez un message…" rows="1" onkeydown="if(event.key===&#39;Enter&#39;&amp;&amp;!event.shiftKey){event.preventDefault();sendMsg()}" oninput="autoResize(this)"></textarea>
-      <button id="send-btn" onclick="sendMsg()" aria-label="Send">↑</button>
+      <textarea id="msg-input" placeholder="Type a message… / Écrivez un message…" rows="1" disabled
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+        oninput="autoResize(this)"></textarea>
+      <button id="send-btn" disabled onclick="sendMsg()" aria-label="Send">↑</button>
     </div>
     <div class="privacy">🔒 Your information is kept confidential and used only for rental purposes.</div>
   </div>
 </div>
 
 <script>
-const APARTMENTS = [
-  {id:'apt-1',name:'2½ — Repentigny (103)',address:'828 Notre Dame, Repentigny, QC J5Y 1B8',price:'$875/mo',rooms:'2½ (studio-style)',size:'553 sq ft',available:'July 1, 2026',lease:'12-month lease. First month deposit required.',amenities:['ALL INCLUSIVE (heat, electricity, hot water, fridge, stove, washer/dryer)','1 exterior parking space included','Decorative fireplace','Laundry hookups in unit'],pets:'Pets allowed (except at Hope/Sussex buildings)',parking:'1 exterior parking space included',description:'All-inclusive 2½ in Repentigny — heat, electricity, hot water, fridge, stove, washer/dryer and parking all included. Previous rent was $975. Great value.'},
-  {id:'apt-2',name:'4½ — Plateau-Mont-Royal (#2)',address:'1882 Sherbrooke Est, Montréal, QC H2K 1B5',price:'$1,495/mo',rooms:'4½ (2 bed)',size:null,available:'May 1, 2026',lease:'12-month lease. First month deposit required. Must sign Hydro.',amenities:['Balcony','Fridge included','2nd floor','Washer/dryer connections'],pets:'Pets allowed (dogs tolerated if no complaints)',parking:'Street parking',description:'Bright 4½ on Sherbrooke Est on the Plateau, 2nd floor with balcony. $600 move-in bonus! Previous rent was $1,391.',moveInBonus:'$600 move-in bonus'},
-  {id:'apt-3',name:'5½ — Plateau-Mont-Royal (basement)',address:'1886 Sherbrooke Est, Montréal, QC H2K 1B5',price:'$1,795/mo',rooms:'5½ (3 bed)',size:null,available:'May 1, 2026',lease:'12-month lease. First month deposit required. Must sign Hydro.',amenities:['Renovated Oct 2022','Hardwood floors','Large terrace','Stainless steel fridge, stove & dishwasher','Washer/dryer included'],pets:'Pets allowed (dogs tolerated if no complaints)',parking:'Street parking',description:'Renovated 3-bedroom basement with large terrace on the Plateau. Fully equipped kitchen plus washer/dryer. $600 move-in bonus!',moveInBonus:'$600 move-in bonus'},
-  {id:'apt-4',name:'3½ — Downtown Hope St (basement)',address:'1189 rue Hope, Montréal, QC H3H 2A3',price:'$1,175/mo',rooms:'3½',size:null,available:'June 1, 2026',lease:'12-month lease ending August 31. First month deposit required. Must sign Hydro.',amenities:['Recently renovated','Fridge & stove included','Basement laundry'],pets:'NO PETS — strict no-pet policy at Hope/Sussex buildings',parking:'Street parking only',description:'Lease assignment — 3½ basement on rue Hope downtown, facing a park. No pets. Heat/electricity not included.'},
-  {id:'apt-5',name:'8½ — Downtown Hope St, 4 bed (#4)',address:'1191 rue Hope, Montréal, QC H3H 2A3',price:'$2,946/mo',rooms:'8½ (4 bedrooms)',size:null,available:'September 1, 2026',lease:'12-month lease ending August 31. Must sign Hydro.',amenities:['4 bedrooms','Balcony','Hot water included','Basement laundry'],pets:'NO PETS — strict no-pet policy at Hope/Sussex buildings',parking:'Street parking only',description:'Large 4-bedroom on rue Hope downtown with balcony. Hot water included.'},
-  {id:'apt-6',name:'5½ — NDG, 3 bed (#3)',address:'2195 Wilson Ave, Montréal, QC H4A 2T4',price:'$2,050/mo',rooms:'5½ (3 bed, 1 bath)',size:'±1,050 sq ft',available:'July 1, 2026',lease:'12-month lease. First month deposit required. Must sign Hydro.',amenities:['A/C','Balcony','New floors, kitchen, bathroom & LED lighting (2021)','Fridge, stove & dishwasher included','Washer/dryer included','1st floor'],pets:'Pets allowed (dogs tolerated if no complaints)',parking:'Street parking only',description:'Spacious renovated 3-bedroom in NDG, 1st floor. Updated 2021. Washer/dryer included. A/C and balcony.'},
-  {id:'apt-7',name:'1½ — Downtown Peel/Sherbrooke (basement)',address:'Peel / Sherbrooke area, Montréal, QC H3A 1W7',price:'$895/mo',rooms:'1½ (studio)',size:null,available:'September 1, 2026',lease:'12-month lease. First month deposit required. Must sign Hydro.',amenities:['Recently renovated kitchen','Fridge, stove & hot water included','Basement laundry'],pets:'Pets allowed (dogs tolerated if no complaints)',parking:'Street parking only',description:'Affordable renovated studio near Peel & Sherbrooke downtown. Hot water included.'},
-  {id:'apt-8',name:'5½ — Downtown Peel/Sherbrooke, 3 bed',address:'Peel / Sherbrooke area, Montréal, QC H3A 1W7',price:'$2,750/mo',rooms:'5½ (3 bed, 2 bath)',size:null,available:'September 1, 2026',lease:'12-month lease. First month deposit required. Must sign Hydro.',amenities:['3 bedrooms','2 bathrooms','2 balconies','Hot water included','Fridge & stove included','Basement laundry'],pets:'Pets allowed (dogs tolerated if no complaints)',parking:'Street parking only',description:'Large 3-bed 2-bath with 2 balconies near Peel & Sherbrooke. Hot water included. Below market price.'}
-];
-
+let APARTMENTS = [];
 let history = [], leadInfo = {name:null,phone:null,email:null}, matchedAptId = null, stage = 'qa', infoStep = null;
 
+// ── Bootstrap: fetch listings then enable chat ────────────────────────────────
+async function loadListings() {
+  try {
+    const res = await fetch('/functions/apartments');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    APARTMENTS = await res.json();
+    if (!Array.isArray(APARTMENTS) || APARTMENTS.length === 0) throw new Error('No listings found in sheet.');
+
+    setStatus('ok', `${APARTMENTS.length} listings loaded`);
+    document.getElementById('msg-input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    addBotMsg('👋 Hi! I\'m the rental assistant for Occidental Lofts & Groupe Centra.\n\nWe have apartments available across Montréal — Plateau, Downtown, NDG, Repentigny and more. Ask me anything about pricing, size, pets, availability — in English or French.\n\nBonjour ! Posez-moi vos questions sur nos appartements en anglais ou en français !');
+  } catch (e) {
+    setStatus('err', 'Could not load listings');
+    addBotMsg(`⚠️ Could not load apartment listings: ${e.message}\n\nPlease check your Google Sheet setup.`);
+  }
+}
+
+function setStatus(type, text) {
+  document.getElementById('status-dot').className = `status-dot ${type}`;
+  document.getElementById('status-text').textContent = text;
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
 function buildSystem() {
   const listings = APARTMENTS.map(a =>
     `[${a.id}] ${a.name}\n  Address: ${a.address}\n  Price: ${a.price} | Rooms: ${a.rooms}${a.size?' | Size: '+a.size:''}\n  Available: ${a.available} | Lease: ${a.lease}\n  Amenities: ${a.amenities.join(', ')}\n  Pets: ${a.pets} | Parking: ${a.parking}\n  About: ${a.description}${a.moveInBonus?' | Bonus: '+a.moveInBonus:''}`
@@ -113,6 +137,7 @@ INSTRUCTIONS:
 - Only output QUALIFY when the lead genuinely wants to visit.`;
 }
 
+// ── Chat logic ────────────────────────────────────────────────────────────────
 async function sendMsg() {
   const el = document.getElementById('msg-input');
   const text = el.value.trim();
@@ -180,6 +205,7 @@ function collectInfo(text) {
   }
 }
 
+// ── UI helpers ────────────────────────────────────────────────────────────────
 function addUserMsg(text) {
   const msgs = document.getElementById('messages');
   const d = document.createElement('div');
@@ -213,10 +239,7 @@ function setLoading(on) {
 function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
 function esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
 
-window.onload = () => {
-  addBotMsg('👋 Hi! I\'m the rental assistant for Occidental Lofts & Groupe Centra.\n\nWe have apartments available across Montréal — Plateau, Downtown, NDG, Repentigny and more. Ask me anything about pricing, size, pets, availability — in English or French.\n\nBonjour ! Posez-moi vos questions sur nos appartements en anglais ou en français !');
-};
+window.onload = () => loadListings();
 </script>
-
 
 </body></html>
