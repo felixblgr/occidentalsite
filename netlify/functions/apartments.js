@@ -1,4 +1,4 @@
-// netlify/functions/apartments.js
+// functions/apartments.js
 // Fetches apartment listings from a public Google Sheet (CSV export)
 
 exports.handler = async function (event, context) {
